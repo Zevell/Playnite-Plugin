@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import re
 import shutil
 import tempfile
 from dataclasses import dataclass, field
@@ -33,6 +34,20 @@ def format_playtime(seconds: int) -> str | None:
         return None
     hours, minutes = divmod(minutes, 60)
     return f"{hours}h played" if hours else f"{minutes}m played"
+
+
+_LAST_ACTIVITY_RE = re.compile(r"^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})\.(\d+)Z$")
+
+
+def _parse_last_activity(value: str | None) -> datetime | None:
+    if not value:
+        return None
+    match = _LAST_ACTIVITY_RE.match(value)
+    if not match:
+        return None
+    base, fraction = match.groups()
+    microseconds = fraction[:6].ljust(6, "0")
+    return datetime.fromisoformat(f"{base}.{microseconds}+00:00")
 
 
 @dataclass(frozen=True)
@@ -68,6 +83,22 @@ class Game:
             last_activity=doc.get("LastActivity"),
             links=links,
             source=source_names.get(doc.get("SourceId")),
+        )
+
+    @classmethod
+    def from_json_api(cls, payload: dict) -> Game:
+        return cls(
+            id=str(payload["id"]),
+            name=payload.get("name") or "",
+            is_installed=bool(payload.get("isInstalled")),
+            hidden=bool(payload.get("hidden")),
+            install_directory=payload.get("installDirectory") or None,
+            icon=payload.get("icon") or None,
+            cover_image=payload.get("coverImage") or None,
+            playtime=int(payload.get("playtime") or 0),
+            last_activity=_parse_last_activity(payload.get("lastActivity")),
+            links=list(payload.get("links") or []),
+            source=payload.get("source") or None,
         )
 
     @property

@@ -78,3 +78,40 @@ def test_game_subtitle():
     assert game_subtitle(game) == "Steam · Installed · 2h played · last played 2026-08-14"
     bare = Game.from_doc({"_id": UUID(GAME_ID), "Name": "Bare"}, {})
     assert game_subtitle(bare) == "Not installed"
+
+
+API_PAYLOAD = {
+    "id": GAME_ID,
+    "name": "Grand Theft Auto V Enhanced",
+    "isInstalled": True,
+    "hidden": False,
+    "installDirectory": r"F:\SteamLibrary\steamapps\common\GTA V",
+    "icon": GAME_ID + r"\icon.ico",
+    "coverImage": GAME_ID + r"\cover.jpg",
+    "playtime": 7200,
+    "lastActivity": "2026-08-14T00:00:00.0000000Z",
+    "links": [{"name": "Steam", "url": "https://store.steampowered.com/app/3240220"}],
+    "source": "Steam",
+}
+
+
+def test_from_json_api_maps_fields():
+    game = Game.from_json_api(API_PAYLOAD)
+    assert game.id == GAME_ID
+    assert game.name == "Grand Theft Auto V Enhanced"
+    assert game.is_installed
+    assert game.source == "Steam"
+    assert game.playtime == 7200
+    assert game.last_activity == datetime(2026, 8, 14, tzinfo=timezone.utc)
+    assert game.links == [{"name": "Steam", "url": "https://store.steampowered.com/app/3240220"}]
+
+
+def test_from_json_api_tolerates_nulls():
+    payload = dict(API_PAYLOAD)
+    payload.update(installDirectory=None, icon=None, coverImage=None, lastActivity=None, links=[], source=None)
+    game = Game.from_json_api(payload)
+    assert game.install_directory is None
+    assert game.icon is None
+    assert game.last_activity is None
+    assert game.links == []
+    assert game.source is None
