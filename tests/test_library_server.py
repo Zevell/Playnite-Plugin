@@ -92,6 +92,33 @@ def test_fetch_games_raises_on_bad_json(monkeypatch):
         fetch_games(port=38217, include_hidden=False)
 
 
+def test_fetch_games_raises_on_wrong_shaped_payload(monkeypatch):
+    monkeypatch.setattr(
+        "library_server.urllib.request.urlopen",
+        lambda url, timeout: FakeResponse(200, {"error": "boom"}),
+    )
+    with pytest.raises(LibraryServerUnavailable):
+        fetch_games(port=38217, include_hidden=False)
+
+
+def test_fetch_games_raises_on_game_missing_id(monkeypatch):
+    monkeypatch.setattr(
+        "library_server.urllib.request.urlopen",
+        lambda url, timeout: FakeResponse(200, [{"name": "Doom"}]),
+    )
+    with pytest.raises(LibraryServerUnavailable):
+        fetch_games(port=38217, include_hidden=False)
+
+
+def test_fetch_games_filters_hidden_games_client_side(monkeypatch):
+    monkeypatch.setattr(
+        "library_server.urllib.request.urlopen",
+        lambda url, timeout: FakeResponse(200, [game_payload(hidden=True)]),
+    )
+    games = fetch_games(port=38217, include_hidden=False)
+    assert games == []
+
+
 def test_fetch_games_passes_hidden_query_param(monkeypatch):
     captured = {}
 

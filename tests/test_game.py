@@ -106,6 +106,18 @@ def test_from_json_api_maps_fields():
     assert game.links == [{"name": "Steam", "url": "https://store.steampowered.com/app/3240220"}]
 
 
+def test_from_json_api_link_without_name_defaults_to_link():
+    payload = dict(API_PAYLOAD, links=[{"url": "https://x.example"}])
+    game = Game.from_json_api(payload)
+    assert game.links == [{"name": "Link", "url": "https://x.example"}]
+
+
+def test_from_json_api_links_without_url_are_dropped():
+    payload = dict(API_PAYLOAD, links=[{"name": "Broken"}, {"name": "Steam", "url": "https://x.example"}])
+    game = Game.from_json_api(payload)
+    assert game.links == [{"name": "Steam", "url": "https://x.example"}]
+
+
 def test_from_json_api_tolerates_nulls():
     payload = dict(API_PAYLOAD)
     payload.update(installDirectory=None, icon=None, coverImage=None, lastActivity=None, links=[], source=None)

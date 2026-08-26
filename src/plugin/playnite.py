@@ -50,6 +50,14 @@ def _parse_last_activity(value: str | None) -> datetime | None:
     return datetime.fromisoformat(f"{base}.{microseconds}+00:00")
 
 
+def _normalize_links(raw_links, name_key: str, url_key: str) -> list[dict]:
+    return [
+        {"name": link.get(name_key) or "Link", "url": link[url_key]}
+        for link in raw_links
+        if link.get(url_key)
+    ]
+
+
 @dataclass(frozen=True)
 class Game:
     id: str
@@ -66,11 +74,7 @@ class Game:
 
     @classmethod
     def from_doc(cls, doc: dict, source_names: dict) -> Game:
-        links = [
-            {"name": link.get("Name") or "Link", "url": link["Url"]}
-            for link in (doc.get("Links") or [])
-            if link.get("Url")
-        ]
+        links = _normalize_links(doc.get("Links") or [], "Name", "Url")
         return cls(
             id=str(doc["_id"]),
             name=doc.get("Name") or "",
@@ -97,7 +101,7 @@ class Game:
             cover_image=payload.get("coverImage") or None,
             playtime=int(payload.get("playtime") or 0),
             last_activity=_parse_last_activity(payload.get("lastActivity")),
-            links=list(payload.get("links") or []),
+            links=_normalize_links(payload.get("links") or [], "name", "url"),
             source=payload.get("source") or None,
         )
 

@@ -9,6 +9,7 @@ if TYPE_CHECKING:
 
 
 def games(server_port: int, include_hidden: bool, fallback: "PlayniteLibrary") -> "list[Game]":
+    """Fall back to ``fallback.games(...)`` only on LibraryServerUnavailable; any other exception from either call propagates uncaught."""
     try:
         return fetch_games(port=server_port, include_hidden=include_hidden)
     except LibraryServerUnavailable:

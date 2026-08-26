@@ -22,6 +22,7 @@ def fetch_games(port: int = DEFAULT_PORT, include_hidden: bool = False, timeout:
             if response.status != 200:
                 raise LibraryServerUnavailable(f"unexpected status {response.status}")
             payload = json.loads(response.read())
-    except (urllib.error.URLError, TimeoutError, OSError, ValueError) as error:
+            games = [Game.from_json_api(doc) for doc in payload]
+    except (urllib.error.URLError, TimeoutError, OSError, ValueError, TypeError, KeyError) as error:
         raise LibraryServerUnavailable(str(error)) from error
-    return [Game.from_json_api(doc) for doc in payload]
+    return [game for game in games if include_hidden or not game.hidden]
