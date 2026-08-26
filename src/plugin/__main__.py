@@ -1,6 +1,8 @@
 from litedb_py import LiteDbError
 from pyflowlauncher import Plugin
 
+from library_server import DEFAULT_PORT as DEFAULT_LIBRARY_SERVER_PORT
+from library_source import games as library_source_games
 from playnite import DEFAULT_DATA_DIR, LibraryNotFound, PlayniteLibrary, PlayniteNotFound
 from results import build_context_menu, build_result, error_result
 from settings import as_bool
@@ -12,11 +14,26 @@ def library() -> PlayniteLibrary:
     return PlayniteLibrary(plugin.settings.get("playnite_path") or DEFAULT_DATA_DIR)
 
 
+def library_server_port() -> int:
+    try:
+        return int(plugin.settings.get("library_server_port") or DEFAULT_LIBRARY_SERVER_PORT)
+    except (TypeError, ValueError):
+        return DEFAULT_LIBRARY_SERVER_PORT
+
+
 @plugin.on_method
 async def query(query: str):
     lib = library()
     try:
-        games = lib.games(include_hidden=as_bool(plugin.settings.get("show_hidden")))
+        games = library_source_games(
+            server_port=library_server_port(),
+            include_hidden=as_bool(plugin.settings.get("show_hidden")),
+            fallback=lib,
+        )
+        # Read eagerly, inside the try: when games come from the live server,
+        # lib.games() is never called, so this is the only place a bad
+        # playnite_path setting (PlayniteNotFound) would otherwise surface.
+        files_dir = lib.files_dir
     except PlayniteNotFound as error:
         yield error_result("Playnite not found", f"Nothing at {error.path}. Set the data directory in settings.")
         return
@@ -36,7 +53,7 @@ async def query(query: str):
             if match.score < match.score_cutoff:
                 continue
             score = int(match.score)
-        yield build_result(game, lib.files_dir, score)
+        yield build_result(game, files_dir, score)
 
 
 @plugin.on_method
@@ -46,4 +63,5 @@ def context_menu(data: list):
     return build_context_menu(data[0])
 
 
-plugin.run()
+if __name__ == "__main__":
+    plugin.run()

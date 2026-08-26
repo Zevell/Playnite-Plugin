@@ -10,6 +10,12 @@ body:
       label: "Playnite Data Directory:"
       defaultValue: "%APPDATA%\\Playnite"
       description: Playnite data directory (the folder containing "library"). Change this for portable installs.
+  - type: input
+    attributes:
+      name: library_server_port
+      label: "Live Library Server Port:"
+      defaultValue: "38217"
+      description: Port the playnite-library-server extension listens on. Only needed if you changed it from the extension's default.
   - type: checkbox
     attributes:
       name: show_hidden
