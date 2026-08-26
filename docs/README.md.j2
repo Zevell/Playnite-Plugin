@@ -3,7 +3,7 @@
 {% block usage %}
 ## Features
 
-* **No Playnite extension required.** Reads `games.db` directly with litedb-py.
+* **Works out of the box.** Reads `games.db` directly with litedb-py, no Playnite extension required.
 * **Fully local.** No web requests, no API keys.
 * **Fuzzy matching.** `pn rdr2` will match Red Dead Redemption 2.
 * **Icons and cover art.** Game icons in results, cover art on `F1`.
@@ -38,6 +38,18 @@ pm install playnite
 
 Download `Playnite-Plugin-<version>.zip` from the [latest release]({{ project.url }}/releases/latest) and unzip it into
 `%appdata%\FlowLauncher\Plugins`, then restart Flow Launcher.
+
+## Live library data (optional)
+
+By default the plugin reads `games.db` directly, which is a snapshot that can go stale while
+Playnite is running (install status, newly added games, artwork). Installing the companion
+[playnite-library-server](https://github.com/Garulf/playnite-library-server) Playnite extension
+lets the plugin pull live data from Playnite instead, including artwork, whenever it's running.
+If the extension isn't installed, or the request fails for any reason, the plugin falls back to
+reading `games.db` as before, no configuration needed.
+
+If you've changed the extension's port from its default (`38217`), set it in the plugin's
+settings via `library_server_port`.
 
 ## Changelog
 
