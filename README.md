@@ -10,6 +10,7 @@ Search and launch your Playnite library. Fully local, no Playnite extension requ
 ## Features
 
 * **Works out of the box.** Reads `games.db` directly with litedb-py, no Playnite extension required.
+* **Live results, optionally.** Pair it with the [playnite-library-server](https://github.com/Garulf/playnite-library-server) extension for live library data while Playnite runs.
 * **Fully local.** No cloud services, no API keys.
 * **Fuzzy matching.** `pn rdr2` will match Red Dead Redemption 2.
 * **Icons and cover art.** Game icons in results, cover art on `F1`.
@@ -54,10 +55,34 @@ lets the plugin pull live data from Playnite instead, including artwork, wheneve
 If the extension isn't installed, or the request fails for any reason, the plugin falls back to
 reading `games.db` as before, no configuration needed.
 
+To set it up, download `PlayniteLibraryServer_<version>.pext` from the extension's
+[latest release](https://github.com/Garulf/playnite-library-server/releases/latest), open it with
+Playnite (or drag it onto the Playnite window), and restart Playnite.
+
 If you've changed the extension's port from its default (`38217`), set it in the plugin's
 settings via `library_server_port`.
 
 ## Changelog
+
+### [3.1.0](https://github.com/Garulf/Playnite-Plugin/compare/v3.0.0...v3.1.0) (2026-08-30)
+
+#### Features
+
+* add Game.from_json_api for the live library server response ([981bef2](https://github.com/Garulf/Playnite-Plugin/commit/981bef2a2b59b139f8799d3726a2b1a087b9bcb3))
+* add HTTP client for the live library server ([a2a85c4](https://github.com/Garulf/Playnite-Plugin/commit/a2a85c468d329115bffef3706e6f2bf1ff0171bd))
+* fall back to the file-based library when the server is unavailable ([d338730](https://github.com/Garulf/Playnite-Plugin/commit/d338730c74a4cd4b5460cdd07623f52f72912279))
+* query the live library server before falling back to games.db ([bae8b10](https://github.com/Garulf/Playnite-Plugin/commit/bae8b104bad138c64362e726ac7e72a75b9024c7))
+
+#### Bug Fixes
+
+* bump pyflowlauncher to 1.1.1 ([#51](https://github.com/Garulf/Playnite-Plugin/issues/51)) ([abd849c](https://github.com/Garulf/Playnite-Plugin/commit/abd849cc44f37cec416626d9a357d22f2078cb05))
+* bump pyflowlauncher to 1.1.2 so builtin result actions dispatch ([6b2544b](https://github.com/Garulf/Playnite-Plugin/commit/6b2544bc0004bb886ae9c7cc69bbdc5a02668dbf))
+* harden the live-server path against malformed responses ([3d9f49e](https://github.com/Garulf/Playnite-Plugin/commit/3d9f49e7bbe07778cc11cb5638fa9a613597e2cd))
+* serve last cached library snapshot when Playnite locks games.db ([2b902ee](https://github.com/Garulf/Playnite-Plugin/commit/2b902eee55a22aaf43bc554a2deff4cb145a59fa))
+
+#### Documentation
+
+* document the live library server integration ([4623c73](https://github.com/Garulf/Playnite-Plugin/commit/4623c73ee0ac5dda14c8b80769e60068ba054e26))
 
 ### [3.0.0](https://github.com/Garulf/Playnite-Plugin/compare/v2.0.0...v3.0.0) (2026-08-25)
 
