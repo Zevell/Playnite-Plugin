@@ -166,11 +166,22 @@ class PlayniteLibrary:
     def cached_copy(self, source: Path) -> Path:
         stat = source.stat()
         cached = self.cache_dir / f"{source.stem}-{stat.st_mtime_ns}-{stat.st_size}.db"
-        if not cached.is_file():
-            self.cache_dir.mkdir(parents=True, exist_ok=True)
-            for stale in self.cache_dir.glob(f"{source.stem}-*.db"):
-                stale.unlink(missing_ok=True)
+        if cached.is_file():
+            return cached
+        self.cache_dir.mkdir(parents=True, exist_ok=True)
+        stale = sorted(self.cache_dir.glob(f"{source.stem}-*.db"))
+        try:
             shutil.copy(source, cached)
+        except PermissionError:
+            # Playnite opens games.db/sources.db with LiteDB's Mode=Exclusive
+            # for its entire run, so the file is unreadable the whole time
+            # Playnite is open. Serve the last snapshot we could read instead
+            # of failing outright.
+            if stale:
+                return stale[-1]
+            raise
+        for old in stale:
+            old.unlink(missing_ok=True)
         return cached
 
     def source_names(self) -> dict:

@@ -1,3 +1,5 @@
+import shutil
+
 import pytest
 
 from playnite import LibraryNotFound, PlayniteLibrary, PlayniteNotFound
@@ -47,3 +49,35 @@ def test_cached_copy_refreshes_and_prunes_stale(tmp_path):
     assert second.read_bytes() == b"changed!!"
     assert second != first
     assert not first.exists()
+
+
+def test_cached_copy_falls_back_to_previous_snapshot_when_source_locked(tmp_path, monkeypatch):
+    """Playnite opens games.db with LiteDB Mode=Exclusive for its whole session,
+    so copying the live file raises PermissionError the entire time Playnite is
+    running. Serve the last snapshot we could read instead of failing outright."""
+    data_dir = make_data_dir(tmp_path)
+    lib = PlayniteLibrary(data_dir, cache_dir=tmp_path / "cache")
+    first = lib.cached_copy(lib.games_db)
+
+    (data_dir / "library" / "games.db").write_bytes(b"changed while locked")
+
+    def locked_copy(src, dst):
+        raise PermissionError(13, "Permission denied")
+
+    monkeypatch.setattr(shutil, "copy", locked_copy)
+    fallback = lib.cached_copy(lib.games_db)
+
+    assert fallback == first
+    assert fallback.read_bytes() == b"original"
+
+
+def test_cached_copy_raises_when_locked_with_no_previous_snapshot(tmp_path, monkeypatch):
+    data_dir = make_data_dir(tmp_path)
+    lib = PlayniteLibrary(data_dir, cache_dir=tmp_path / "cache")
+
+    def locked_copy(src, dst):
+        raise PermissionError(13, "Permission denied")
+
+    monkeypatch.setattr(shutil, "copy", locked_copy)
+    with pytest.raises(PermissionError):
+        lib.cached_copy(lib.games_db)
